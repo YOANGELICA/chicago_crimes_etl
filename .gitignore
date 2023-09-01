@@ -1,3 +1,5 @@
 .ipynb_checkpoints/
 data/Crimes_2001_to_Present.csv
+data/data.csv
 etl_env/
+config_db.json
