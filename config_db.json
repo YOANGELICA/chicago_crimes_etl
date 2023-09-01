@@ -1,0 +1,7 @@
+{
+    "host": "localhost",
+    "user": "user",
+    "password": "password",
+    "database": "etl",
+    "auth_plugin":"mysql_native_password"
+}
