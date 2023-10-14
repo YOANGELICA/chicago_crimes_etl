@@ -4,3 +4,4 @@ data/data.csv
 etl_env/
 eda/config_db.json
 transformations/config_db.json
+data
