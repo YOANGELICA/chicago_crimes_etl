@@ -8,3 +8,6 @@ transformations/config_db.json
 data/new_data.csv
 api_dag/secrets/
 api_dag/data/
+api_dag/secrests/api_credentials.json
+api_dag/secrests/config_db.json
+
