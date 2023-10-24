@@ -6,4 +6,5 @@ etl_env/
 config_db.json
 transformations/config_db.json
 data/new_data.csv
-
+api_dag/secrets/
+api_dag/data/
