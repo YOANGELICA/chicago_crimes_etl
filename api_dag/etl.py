@@ -2,15 +2,9 @@ import requests
 import pandas as pd
 import json
 import logging
-import psycopg2 as psy
 from sodapy import Socrata
-import transformations.transform
-
-def create_db_connection():
-    with open('./secrets/config_db.json') as config_json:
-        config = json.load(config_json)
-    conx = psy.connect(**config) 
-    return conx
+import api_dag.transform
+import api_dag.db_queries as db_queries
 
 def read_csv():
     df = pd.read_csv("./data/Crimes_2001_to_Present.csv")
@@ -80,16 +74,16 @@ def transform_csv(json_data):
     df=pd.DataFrame(data)
     logging.info("MY DATAFRAME", df)
 
-    df=transformations.transform.split_datetime(df)
-    df=transformations.transform.move_time(df)
-    df=transformations.transform.change_updated_on_format(df)
-    df=transformations.transform.convert_dtype(df)
-    df=transformations.transform.replace_nulls(df)
-    df=transformations.transform.change_dtype_columns(df)
-    df=transformations.transform.change_columns_names(df)
-    df=transformations.transform.create_point(df)
-    df=transformations.transform.drop_na_location(df)
-    df=transformations.transform.drop_columns(df)
+    df=api_dag.transform.split_datetime(df)
+    df=api_dag.transform.move_time(df)
+    df=api_dag.transform.change_updated_on_format(df)
+    df=api_dag.transform.convert_dtype(df)
+    df=api_dag.transform.replace_nulls(df)
+    df=api_dag.transform.change_dtype_columns(df)
+    df=api_dag.transform.change_columns_names(df)
+    df=api_dag.transform.create_point(df)
+    df=api_dag.transform.drop_na_location(df)
+    df=api_dag.transform.drop_columns(df)
 
     return df.to_json(orient='records')
 
@@ -102,16 +96,16 @@ def transform_update_data(json_data):
     df=pd.DataFrame(data)
     logging.info("MY DATAFRAME", df)
 
-    df=transformations.transform.drop_columns_newdata(df)
-    df=transformations.transform.create_point(df)
-    df=transformations.transform.split_datetime_newdata(df)
-    df=transformations.transform.replace_nulls_newdata(df)
-    df=transformations.transform.change_columns_dtype_newdata(df)
-    df=transformations.transform.move_time(df)
-    df=transformations.transform.change_columns_names(df)
-    df=transformations.transform.drop_na_location(df)
-    df=transformations.transform.drop_columns(df)
-    df=transformations.transform.drop_more_columns_newdata(df)
+    df=api_dag.transform.drop_columns_newdata(df)
+    df=api_dag.transform.create_point(df)
+    df=api_dag.transform.split_datetime_newdata(df)
+    df=api_dag.transform.replace_nulls_newdata(df)
+    df=api_dag.transform.change_columns_dtype_newdata(df)
+    df=api_dag.transform.move_time(df)
+    df=api_dag.transform.change_columns_names(df)
+    df=api_dag.transform.drop_na_location(df)
+    df=api_dag.transform.drop_columns(df)
+    df=api_dag.transform.drop_more_columns_newdata(df)
 
     return df.to_json(orient='records')
 
@@ -131,9 +125,49 @@ def transform_iucr(json_data):
 #TODO: Queda pendiente el borrar los iucr que no usa la tabla de crimes
 
 def merge(json_data, json_data2, json_data3):
-    
+    pass
+
+def create_tables():
+
+    db_queries.create_table_crimes()
+
+    description_crimes= db_queries.describe_crimes()
+    desc_crimes=pd.DataFrame(description_crimes, columns=['Field', 'Type', 'Null', 'Key', 'Default', 'Extra'])
+    logging.info(desc_crimes)
+
+    ###
+    db_queries.create_table_iucr()
+
+    description_iucr= db_queries.describe_iucr()
+    desc_iucr=pd.DataFrame(description_iucr, columns=['Field', 'Type', 'Null', 'Key', 'Default', 'Extra'])
+    logging.info(desc_iucr)
+
+    ###
+
+def load_crimes(json_data):
+    logging.info("MY JSON DATA IS: ", json_data)
+    logging.info("TYPE OF JSON DATA: ", type(json_data))
+
+    data = json_data
+    data = json.loads(data)
+    df=pd.DataFrame(data)
+    logging.info("MY DATAFRAME", df)
 
 
+    db_queries.insert_info_crimes(df)
 
-if __name__ == '__main__':
+def load_iucr(json_data):
+    logging.info("MY JSON DATA IS: ", json_data)
+    logging.info("TYPE OF JSON DATA: ", type(json_data))
+
+    data = json_data
+    data = json.loads(data)
+    df=pd.DataFrame(data)
+    logging.info("MY DATAFRAME", df)
+
+    db_queries.insert_info_iucr()
+
+def load_date(json_data):
+    pass
+
 

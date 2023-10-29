@@ -3,7 +3,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime
 from airflow.decorators import dag, task
-from etl import read_csv, read_api_iucr, read_api_update, transform_csv,transform_update_data, transform_iucr, merge
+from etl import read_csv, read_api_iucr, read_api_update, transform_csv,transform_update_data, transform_iucr, merge, create_tables, load_crimes, load_iucr, load_date
 
 
 default_args = {
@@ -53,6 +53,22 @@ def etl_project():
     @task
     def merge_task(json_data, json_data2, json_data3):
         return merge(json_data, json_data2, json_data3)
+    
+    @task
+    def create_tables_task():
+        create_tables()
+
+    @task
+    def load_crimes_data_task(json_data):
+        load_crimes(json_data)
+
+    @task
+    def load_iucr_data_task(json_data):
+        load_iucr(json_data)
+
+    # @task
+    # def load_date_data_task(json_data):
+    #     load_date(json_data)
 
 
     data_csv = extract_task_csv()
@@ -66,10 +82,17 @@ def etl_project():
 
     merge_data = merge_task(data_tcsv, data_tupdate, data_tiucr)
 
-    data_csv >> data_tcsv >> merge_data >> create_tables
-    create_tables  >> [load_date, load_csv, load_iucr]
-    data_api_update >> data_tupdate >> merge_data
-    data_api_iucr >> data_tiucr >> merge_data
+    create_tables_task()
+
+    load_crimes_data_task(merge_data)
+    load_iucr_data_task(data_tiucr)
+    # load_date_data_task()
+
+
+    # data_csv >> data_tcsv >> merge_data >> create_tables
+    # create_tables  >> [load_date, load_csv, load_iucr]
+    # data_api_update >> data_tupdate >> merge_data
+    # data_api_iucr >> data_tiucr >> merge_data
 
 
 
