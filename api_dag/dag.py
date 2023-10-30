@@ -1,99 +1,95 @@
 from datetime import timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.models.baseoperator import chain
 from datetime import datetime
-from airflow.decorators import dag, task
-from etl import read_csv, read_api_iucr, read_api_update, transform_csv,transform_update_data, transform_iucr, merge, create_tables, load_crimes, load_iucr, load_date
-
+from etl import read_csv, read_api_iucr, read_api_update, transform_csv, transform_update_data, transform_iucr, merge, create_tables, load_crimes, load_iucr, load_date
 
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2023, 9, 14),  # Update the start date to today or an appropriate date
+    'start_date': datetime(2023, 10, 30),
     'email': ['airflow@example.com'],
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(minutes=1) #It do the retries one minute before the first time, and it do it just one more time because the key "retries" said it to do it just once (the line before this one)
+    'retry_delay': timedelta(minutes=1)
 }
 
-
-@dag(
+with DAG(
+    'etl_project',
     default_args=default_args,
-    description='DAG for ETL project',
-    schedule_interval='@daily',  
-)
+    description='ETL project DAG',
+    schedule_interval='@daily',  # Set the schedule interval as per your requirements
+) as dag:
 
-def etl_project():
+    read_csv_task = PythonOperator(
+        task_id='read_csv_task',
+        python_callable=read_csv,
+        provide_context = True,
+    )
 
-    @task
-    def extract_task_csv ():
-        return read_csv()
+    read_iucr_task = PythonOperator(
+        task_id='read_iucr_task',
+        python_callable=read_api_iucr,
+        provide_context = True,
+        )
+
+    read_update_task = PythonOperator(
+        task_id='read_update_task',
+        python_callable=read_api_update,
+        provide_context = True,
+        )
+
+    transform_csv_task = PythonOperator(
+        task_id='transform_csv_task',
+        python_callable=transform_csv,
+        provide_context = True,
+        )
     
-    @task
-    def extract_task_api_iucr ():
-        return read_api_iucr()
+    transform_update_task = PythonOperator(
+        task_id='transform_update_task',
+        python_callable=transform_update_data,
+        provide_context = True,
+        )
     
-    @task
-    def extract_task_api_update ():
-        return read_api_update()
-
-    @task
-    def transform_task_csv (json_data):
-        return transform_csv(json_data)
+    transform_iucr_task = PythonOperator(
+        task_id='transform_iucr_task',
+        python_callable=transform_iucr,
+        provide_context = True,
+        )
     
-    @task
-    def transform_task_update_data (json_data):
-        return transform_update_data(json_data)
-    
-    @task
-    def transform_task_iucr(json_data):
-        return transform_iucr(json_data)
-    
-    @task
-    def merge_task(json_data, json_data2, json_data3):
-        return merge(json_data, json_data2, json_data3)
-    
-    @task
-    def create_tables_task():
-        create_tables()
+    merge_task = PythonOperator(
+        task_id='merge_task',
+        python_callable = merge,
+        provide_context = True,
+        )
 
-    @task
-    def load_crimes_data_task(json_data):
-        load_crimes(json_data)
+    create_tables_task = PythonOperator(
+        task_id = 'create_tables_task',
+        python_callable = create_tables,
+        provide_context = True,
+        )
 
-    @task
-    def load_iucr_data_task(json_data):
-        load_iucr(json_data)
+    load_crimes_task = PythonOperator(
+        task_id = 'load_crimes_task',
+        python_callable = load_crimes,
+        provide_context = True
+        )
 
-    # @task
-    # def load_date_data_task(json_data):
-    #     load_date(json_data)
+    load_iucr_task = PythonOperator(
+        task_id = 'load_iucr_task',
+        python_callable = load_iucr,
+        provide_context = True
+        )
 
+    load_date_task = PythonOperator(
+        task_id = 'load_date_task',
+        python_callable = load_date,
+        provide_context = True
+        )
 
-    data_csv = extract_task_csv()
-    data_api_iucr = extract_task_api_iucr ()
-    data_api_update = extract_task_api_update ()
-
-    data_tcsv = transform_task_csv(data_csv)
-    data_tupdate = transform_task_update_data (data_api_update)
-    data_tiucr= transform_task_iucr (data_api_iucr)
-
-
-    merge_data = merge_task(data_tcsv, data_tupdate, data_tiucr)
-
-    create_tables_task()
-
-    load_crimes_data_task(merge_data)
-    load_iucr_data_task(data_tiucr)
-    # load_date_data_task()
-
-
-    # data_csv >> data_tcsv >> merge_data >> create_tables
-    # create_tables  >> [load_date, load_csv, load_iucr]
-    # data_api_update >> data_tupdate >> merge_data
-    # data_api_iucr >> data_tiucr >> merge_data
-
-
-
-etl_project()
+    read_csv_task >> transform_csv_task >> merge_task >> create_tables_task
+    create_tables_task >> [load_crimes_task, load_iucr_task, load_date_task]
+    read_iucr_task >> transform_iucr_task >> merge_task 
+    read_update_task >> transform_update_task >> merge_task
