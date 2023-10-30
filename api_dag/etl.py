@@ -3,8 +3,8 @@ import pandas as pd
 import json
 import logging
 from sodapy import Socrata
-import api_dag.transform
-import api_dag.db_queries as db_queries
+import transform
+import db_queries as db_queries
 
 def read_csv():
     df = pd.read_csv("./data/Crimes_2001_to_Present.csv")
@@ -74,16 +74,16 @@ def transform_csv(json_data):
     df=pd.DataFrame(data)
     logging.info("MY DATAFRAME", df)
 
-    df=api_dag.transform.split_datetime(df)
-    df=api_dag.transform.move_time(df)
-    df=api_dag.transform.change_updated_on_format(df)
-    df=api_dag.transform.convert_dtype(df)
-    df=api_dag.transform.replace_nulls(df)
-    df=api_dag.transform.change_dtype_columns(df)
-    df=api_dag.transform.change_columns_names(df)
-    df=api_dag.transform.create_point(df)
-    df=api_dag.transform.drop_na_location(df)
-    df=api_dag.transform.drop_columns(df)
+    df=transform.split_datetime(df)
+    df=transform.move_time(df)
+    df=transform.change_updated_on_format(df)
+    df=transform.convert_dtype(df)
+    df=transform.replace_nulls(df)
+    df=transform.change_dtype_columns(df)
+    df=transform.change_columns_names(df)
+    df=transform.create_point(df)
+    df=transform.drop_na_location(df)
+    df=transform.drop_columns(df)
 
     return df.to_json(orient='records')
 
@@ -96,16 +96,16 @@ def transform_update_data(json_data):
     df=pd.DataFrame(data)
     logging.info("MY DATAFRAME", df)
 
-    df=api_dag.transform.drop_columns_newdata(df)
-    df=api_dag.transform.create_point(df)
-    df=api_dag.transform.split_datetime_newdata(df)
-    df=api_dag.transform.replace_nulls_newdata(df)
-    df=api_dag.transform.change_columns_dtype_newdata(df)
-    df=api_dag.transform.move_time(df)
-    df=api_dag.transform.change_columns_names(df)
-    df=api_dag.transform.drop_na_location(df)
-    df=api_dag.transform.drop_columns(df)
-    df=api_dag.transform.drop_more_columns_newdata(df)
+    df=transform.drop_columns_newdata(df)
+    df=transform.create_point(df)
+    df=transform.split_datetime_newdata(df)
+    df=transform.replace_nulls_newdata(df)
+    df=transform.change_columns_dtype_newdata(df)
+    df=transform.move_time(df)
+    df=transform.change_columns_names(df)
+    df=transform.drop_na_location(df)
+    df=transform.drop_columns(df)
+    df=transform.drop_more_columns_newdata(df)
 
     return df.to_json(orient='records')
 
