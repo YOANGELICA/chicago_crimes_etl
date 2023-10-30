@@ -49,17 +49,12 @@ def drop_na_location(df):
     return df
 
 def drop_columns(df):
-    columns_to_drop = ['case_number', 'domestic', 'beat', 'ward', 'community_area', 'fbi_code', 'x_coord', 'y_coord', 'latitude', 'longitude']
+    columns_to_drop = ['case_number', 'domestic', 'beat', 'ward', 'community_area', 'fbi_code', 'x_coord', 'y_coord', 'latitude', 'longitude', 'primary_type', 'description']
     df.drop(columns=columns_to_drop, inplace=True)
     return df
 
 def drop_columns_newdata(df):
     df = df.iloc[:, :-10]
-    return df
-
-def drop_more_columns_newdata(df):
-    columns_to_drop = ['primary_type', 'description']
-    df.drop(columns=columns_to_drop, inplace=True)
     return df
 
 def split_datetime_newdata(df):

@@ -3,7 +3,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.models.baseoperator import chain
 from datetime import datetime
-from etl import read_csv, read_api_iucr, read_api_update, transform_csv, transform_update_data, transform_iucr, merge, create_tables, load_crimes, load_iucr, load_date
+from etl import read_csv, read_api_iucr, read_api_update, transform_csv, transform_update_data, transform_iucr, merge, create_date, create_tables, load_crimes, load_iucr, load_date
 
 default_args = {
     'owner': 'airflow',
@@ -65,6 +65,12 @@ with DAG(
         provide_context = True,
         )
 
+    create_date_task = PythonOperator(
+        task_id = 'create_date_task',
+        python_callable = create_date,
+        provide_context = True
+        )
+
     create_tables_task = PythonOperator(
         task_id = 'create_tables_task',
         python_callable = create_tables,
@@ -89,7 +95,7 @@ with DAG(
         provide_context = True
         )
 
-    read_csv_task >> transform_csv_task >> merge_task >> create_tables_task
+    read_csv_task >> transform_csv_task >> merge_task >> create_date >> create_tables_task
     create_tables_task >> [load_crimes_task, load_iucr_task, load_date_task]
     read_iucr_task >> transform_iucr_task >> merge_task 
     read_update_task >> transform_update_task >> merge_task

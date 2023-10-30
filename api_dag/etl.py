@@ -4,7 +4,7 @@ import json
 import logging
 from sodapy import Socrata
 import transform
-import db_queries as db_queries
+import db_queries
 
 def read_csv():
     df = pd.read_csv("./data/Crimes_2001_to_Present.csv")
@@ -63,16 +63,23 @@ def read_api_update():
     logging.info("Total records retrieved:", len(all_records))
 
     df = pd.DataFrame(all_records)
+    df.to_csv("./data/new_data.csv", index=False)
     return df.to_json(orient='records')
 
-def transform_csv(json_data):
-    logging.info("MY JSON DATA IS: ", json_data)
-    logging.info("TYPE OF JSON DATA: ", type(json_data))
+def transform_csv(**kwargs):
+    logging.info("kwargs are: ", kwargs.keys())
 
-    data = json_data
-    data = json.loads(data)
-    df=pd.DataFrame(data)
-    logging.info("MY DATAFRAME", df)
+    ti = kwargs['ti']
+    logging.info("ti: ",ti)
+
+    str_data = ti.xcom_pull(task_ids="read_csv_task")
+    logging.info(f"str_data: {str_data}")
+
+    json_data = json.loads(str_data)
+    df = pd.json_normalize(data=json_data)
+
+    logging.info(f"data is: {df.head()}")
+    logging.info(f"Dataframe intial shape: {df.shape[0]} Rows and {df.shape[1]} Columns")
 
     df=transform.split_datetime(df)
     df=transform.move_time(df)
@@ -87,14 +94,20 @@ def transform_csv(json_data):
 
     return df.to_json(orient='records')
 
-def transform_update_data(json_data):
-    logging.info("MY JSON DATA IS: ", json_data)
-    logging.info("TYPE OF JSON DATA: ", type(json_data))
+def transform_update_data(**kwargs):
+    logging.info("kwargs are: ", kwargs.keys())
 
-    data = json_data
-    data = json.loads(data)
-    df=pd.DataFrame(data)
-    logging.info("MY DATAFRAME", df)
+    ti = kwargs['ti']
+    logging.info("ti: ",ti)
+
+    str_data = ti.xcom_pull(task_ids="read_update_task")
+    logging.info(f"str_data: {str_data}")
+
+    json_data = json.loads(str_data)
+    df = pd.json_normalize(data=json_data)
+
+    logging.info(f"data is: {df.head()}")
+    logging.info(f"Dataframe intial shape: {df.shape[0]} Rows and {df.shape[1]} Columns")
 
     df=transform.drop_columns_newdata(df)
     df=transform.create_point(df)
@@ -109,14 +122,20 @@ def transform_update_data(json_data):
 
     return df.to_json(orient='records')
 
-def transform_iucr(json_data):
-    logging.info("MY JSON DATA IS: ", json_data)
-    logging.info("TYPE OF JSON DATA: ", type(json_data))
+def transform_iucr(**kwargs):
+    logging.info("kwargs are: ", kwargs.keys())
 
-    data = json_data
-    data = json.loads(data)
-    df=pd.DataFrame(data)
-    logging.info("MY DATAFRAME", df)
+    ti = kwargs['ti']
+    logging.info("ti: ",ti)
+
+    str_data = ti.xcom_pull(task_ids="read_iucr_task")
+    logging.info(f"str_data: {str_data}")
+
+    json_data = json.loads(str_data)
+    df = pd.json_normalize(data=json_data)
+
+    logging.info(f"data is: {df.head()}")
+    logging.info(f"Dataframe intial shape: {df.shape[0]} Rows and {df.shape[1]} Columns")
 
     df['iucr'] = df['iucr'].apply(lambda x: '0' + x if len(x) == 3 else x)
 
@@ -124,8 +143,61 @@ def transform_iucr(json_data):
 
 #TODO: Queda pendiente el borrar los iucr que no usa la tabla de crimes
 
-def merge(json_data, json_data2, json_data3):
-    pass
+def merge(**kwargs):
+    logging.info("kwargs are: ", kwargs.keys())
+
+    ti = kwargs['ti']
+    logging.info("ti: ",ti)
+
+    str_data = ti.xcom_pull(task_ids= ["transform_csv_task","transform_update_task"])
+    csv_data_str = str_data[0]
+    update_data_str = str_data[1]
+
+    # Updated data (transformed):   
+    logging.info(f"Updated data: {update_data_str}")
+    json_data_updated = json.loads(update_data_str)
+    update_df = pd.json_normalize(data=json_data_updated)
+    logging.info(f"FIRST DF - UPDATED INFO: {update_df.shape}")
+
+    # Data from the csv file (transformed):
+    logging.info(f"Csv data: {csv_data_str}")
+    json_data_csv = json.loads(csv_data_str)
+    csv_df = pd.json_normalize(data=json_data_csv)
+    logging.info(f"SECOND DF - CSV INFO: {csv_df.shape}")
+
+    df = pd.concat([csv_df, update_df], ignore_index=True)
+
+    return df.to_json(orient='records')
+
+
+def create_date(**kwargs):
+
+    logging.info("kwargs are: ", kwargs.keys())
+
+    ti = kwargs['ti']
+    logging.info("ti: ",ti)
+
+    str_data = ti.xcom_pull(task_ids="merge_task")
+    logging.info(f"str_data: {str_data}")
+
+    json_data = json.loads(str_data)
+    df = pd.json_normalize(data=json_data)
+
+    date_df = df[['date']]
+    date_df = date_df.drop_duplicates().reset_index(drop=True)
+
+    logging.info(f"date df shape: {date_df.shape}") # should be (8299, 1)
+    
+    date_df['date'] = pd.to_datetime(date_df['date']) # EN CAASO DE QUE NO RECIBA LA COL DATE COMO DATETIME, SI SÍ LA RECIBE, BORRAR ESTO AKSBFHAS
+    date_df['date_id'] = date_df['date'].dt.strftime('%Y%m%d')
+    date_df['year'] = date_df['date'].dt.year
+    date_df['month'] = date_df['date'].dt.strftime('%B')
+    date_df['day_week'] = date_df['date'].dt.strftime('%A')
+
+    logging.info(f'first row: {date_df.iloc[0].values}')
+
+    return date_df.to_json(orient='records')
+
 
 def create_tables():
 
@@ -144,26 +216,38 @@ def create_tables():
 
     ###
 
-def load_crimes(json_data):
-    logging.info("MY JSON DATA IS: ", json_data)
-    logging.info("TYPE OF JSON DATA: ", type(json_data))
+def load_crimes(**kwargs):
+    logging.info("kwargs are: ", kwargs.keys())
 
-    data = json_data
-    data = json.loads(data)
-    df=pd.DataFrame(data)
-    logging.info("MY DATAFRAME", df)
+    ti = kwargs['ti']
+    logging.info("ti: ",ti)
+
+    str_data = ti.xcom_pull(task_ids="merge_task")
+    logging.info(f"str_data: {str_data}")
+
+    json_data = json.loads(str_data)
+    df = pd.json_normalize(data=json_data)
+
+    logging.info(f"data is: {df.head()}")
+    logging.info(f"Dataframe intial shape: {df.shape[0]} Rows and {df.shape[1]} Columns")
 
 
     db_queries.insert_info_crimes(df)
 
-def load_iucr(json_data):
-    logging.info("MY JSON DATA IS: ", json_data)
-    logging.info("TYPE OF JSON DATA: ", type(json_data))
+def load_iucr(**kwargs):
+    logging.info("kwargs are: ", kwargs.keys())
 
-    data = json_data
-    data = json.loads(data)
-    df=pd.DataFrame(data)
-    logging.info("MY DATAFRAME", df)
+    ti = kwargs['ti']
+    logging.info("ti: ",ti)
+
+    str_data = ti.xcom_pull(task_ids="transform_iucr_task")
+    logging.info(f"str_data: {str_data}")
+
+    json_data = json.loads(str_data)
+    df = pd.json_normalize(data=json_data)
+
+    logging.info(f"data is: {df.head()}")
+    logging.info(f"Dataframe intial shape: {df.shape[0]} Rows and {df.shape[1]} Columns")
 
     db_queries.insert_info_iucr()
 
