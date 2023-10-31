@@ -80,8 +80,7 @@ def create_table_iucr():
     mycursor = conx.cursor()
 
     mycursor.execute("""CREATE TABLE IF NOT EXISTS codes(
-                 iucr varchar(10) 
-                 PRIMARY KEY,
+                 iucr varchar(10) PRIMARY KEY,
                  primary_description VARCHAR(50),
                  secondary_description VARCHAR(70),
                  index_code VARCHAR(5),
@@ -120,6 +119,59 @@ def insert_info_iucr(df):
             i['secondary_description'], 
             i['index_code'], 
             i['active']
+        )
+
+        mycursor.execute(insert, datos)
+    conx.commit()
+    mycursor.close()
+    conx.close()
+    return "ok"
+
+#### DATES
+
+def create_table_dates():
+    conx = create_db_connection()
+    mycursor = conx.cursor()
+
+    mycursor.execute("""CREATE TABLE IF NOT EXISTS dates(
+                 date datetime,
+                 date_id varchar(10) PRIMARY KEY,
+                 year int,
+                 month varchar(10),
+                 day_week varchar(10))""")
+
+    conx.commit()
+    mycursor.close()
+    conx.close()
+    return "ok"
+
+def describe_dates():
+    conx = create_db_connection()
+    mycursor = conx.cursor()
+
+    query = "DESCRIBE dates"
+    mycursor.execute(query)
+
+    description_iucr = mycursor.fetchall()
+
+    mycursor.close()
+    return description_iucr
+
+def insert_info_dates(df):
+    conx = create_db_connection()
+    mycursor = conx.cursor()
+    
+    for _, i in df.iterrows():
+        insert = """INSERT INTO codes 
+        (date, date_id, year, month, day_week) 
+        VALUES (%s, %s, %s, %s, %s)"""
+
+        datos = (
+            i['date'],
+            i['date_id'], 
+            i['year'], 
+            i['month'], 
+            i['day_week']
         )
 
         mycursor.execute(insert, datos)

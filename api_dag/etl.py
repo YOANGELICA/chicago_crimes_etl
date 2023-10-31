@@ -118,7 +118,6 @@ def transform_update_data(**kwargs):
     df=transform.change_columns_names(df)
     df=transform.drop_na_location(df)
     df=transform.drop_columns(df)
-    df=transform.drop_more_columns_newdata(df)
 
     return df.to_json(orient='records')
 
@@ -169,7 +168,6 @@ def merge(**kwargs):
 
     return df.to_json(orient='records')
 
-
 def create_date(**kwargs):
 
     logging.info("kwargs are: ", kwargs.keys())
@@ -215,6 +213,11 @@ def create_tables():
     logging.info(desc_iucr)
 
     ###
+    db_queries.create_table_dates()
+
+    description_dates= db_queries.describe_dates()
+    desc_dates=pd.DataFrame(description_dates, columns=['Field', 'Type', 'Null', 'Key', 'Default', 'Extra'])
+    logging.info(desc_dates)
 
 def load_crimes(**kwargs):
     logging.info("kwargs are: ", kwargs.keys())
@@ -251,7 +254,21 @@ def load_iucr(**kwargs):
 
     db_queries.insert_info_iucr()
 
-def load_date(json_data):
-    pass
+def load_date(**kwargs):
+    logging.info("kwargs are: ", kwargs.keys())
+
+    ti = kwargs['ti']
+    logging.info("ti: ",ti)
+
+    str_data = ti.xcom_pull(task_ids="create_date_task")
+    logging.info(f"str_data: {str_data}")
+
+    json_data = json.loads(str_data)
+    df = pd.json_normalize(data=json_data)
+
+    logging.info(f"data is: {df.head()}")
+    logging.info(f"Dataframe intial shape: {df.shape[0]} Rows and {df.shape[1]} Columns")
+
+    db_queries.insert_info_iucr()
 
 
