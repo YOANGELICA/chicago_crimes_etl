@@ -269,6 +269,6 @@ def load_date(**kwargs):
     logging.info(f"data is: {df.head()}")
     logging.info(f"Dataframe intial shape: {df.shape[0]} Rows and {df.shape[1]} Columns")
 
-    db_queries.insert_info_iucr()
+    db_queries.insert_info_dates()
 
 
