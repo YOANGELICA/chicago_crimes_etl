@@ -3,7 +3,7 @@ import json
 
 
 def create_db_connection():
-    with open('./secrets/config_db.json') as config_json:
+    with open('/home/vagrant/airflow/dags/secrets/config_db.json') as config_json:
         config = json.load(config_json)
     conx = psy.connect(**config) 
     return conx

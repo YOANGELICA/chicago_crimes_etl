@@ -12,6 +12,15 @@ def move_time(df):
     df.insert(3,'time', move_time)
     return df
 
+def move_date(df):
+    move_date = df.pop('date')
+    df.insert(2,'date', move_date)
+    return df
+
+def drop_unnamed0(df):
+    df.drop('Unnamed: 0', inplace=True)
+    return df
+
 def change_updated_on_format(df):
     # changing updated_on format
     df['Updated On'] = pd.to_datetime(df['Updated On'], format='%m/%d/%Y %I:%M:%S %p')
@@ -32,10 +41,8 @@ def change_dtype_columns(df):
     cols = ['District', 'Ward', 'Community Area', 'Arrest', 'Domestic']
     df[cols] = df[cols].astype(int)
     return df
-
 def change_columns_names(df):
-    df.columns = ["id","case_number","date", "time", "block","iucr","primary_type","description","location_desc","arrest","domestic","beat","district","ward", "community_area", "fbi_code", "x_coord",
-       "y_coord","year","updated_on","latitude","longitude", "location"]
+    df.columns = ["id","case_number","date", "time", "block","iucr","primary_type","description","location_desc","arrest","domestic","beat","district","ward","community_area","fbi_code", "x_coord","y_coord","year","updated_on","latitude","longitude", "location"]
     return df
 
 def create_point(df):
@@ -72,3 +79,4 @@ def change_columns_dtype_newdata(df):
     cols = ['district', 'arrest', 'domestic', 'ward', 'community_area', 'x_coordinate', 'y_coordinate']
     df[cols] = df[cols].astype(int)
     return df
+

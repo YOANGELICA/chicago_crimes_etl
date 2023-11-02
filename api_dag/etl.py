@@ -7,7 +7,7 @@ import transform
 import db_queries
 
 def read_csv():
-    df = pd.read_csv("./data/filtered_data.csv")
+    df = pd.read_csv("/home/vagrant/airflow/dags/data/filtered_data.csv")
     logging.info("MY DF: ", df)
     logging.info("df shape: ",df)
     return df.to_json(orient='records')
@@ -41,7 +41,7 @@ def read_api_iucr():
 
 def read_api_update():
 
-    df = pd.read_csv("./data/new_data.csv")
+    df = pd.read_csv("/home/vagrant/airflow/dags/data/new_data.csv")
     logging.info("MY DF: ", df)
     logging.info("df shape: ",df)
     """
@@ -80,7 +80,7 @@ def transform_csv(**kwargs):
     logging.info("ti: ",ti)
 
     str_data = ti.xcom_pull(task_ids="read_csv_task")
-    logging.info(f"str_data: {str_data}")
+    #logging.info(f"str_data: {str_data}")
 
     json_data = json.loads(str_data)
     df = pd.json_normalize(data=json_data)
@@ -90,9 +90,13 @@ def transform_csv(**kwargs):
 
     df=transform.split_datetime(df)
     df=transform.move_time(df)
+    df=transform.move_date(df)
+    print(df.columns)
+    #df=transform.drop_unnamed0(df)
     df=transform.change_updated_on_format(df)
     df=transform.convert_dtype(df)
     df=transform.replace_nulls(df)
+    print(df.columns)
     df=transform.change_dtype_columns(df)
     df=transform.change_columns_names(df)
     df=transform.create_point(df)
@@ -125,6 +129,7 @@ def transform_update_data(**kwargs):
     df=transform.change_columns_names(df)
     df=transform.drop_na_location(df)
     df=transform.drop_columns(df)
+    print(df.columns)
 
     return df.to_json(orient='records')
 
@@ -277,5 +282,6 @@ def load_date(**kwargs):
     logging.info(f"Dataframe intial shape: {df.shape[0]} Rows and {df.shape[1]} Columns")
 
     db_queries.insert_info_dates()
+
 
 
