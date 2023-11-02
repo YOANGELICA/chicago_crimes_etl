@@ -3,13 +3,13 @@ import pandas as pd
 
 def split_datetime(df):
     # turning date column into datetime to extract the time and create the time column
-    df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y %I:%M:%S %p')
-    df['Time'] = df['Date'].apply(lambda x: x.time())
+    df['date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y %I:%M:%S %p')
+    df['time'] = df['date'].apply(lambda x: x.time())
     return df
 
 def move_time(df):
-    move_time = df.pop('Time')
-    df.insert(3,'Time', move_time)
+    move_time = df.pop('time')
+    df.insert(3,'time', move_time)
     return df
 
 def change_updated_on_format(df):
@@ -19,7 +19,7 @@ def change_updated_on_format(df):
 
 def convert_dtype(df):
     # taking just the date part, converting into dtype object
-    df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y %I:%M:%S %p').dt.date
+    df['date'] = pd.to_datetime(df['date'], format='%m/%d/%Y %I:%M:%S %p').dt.date
     return df
 
 def replace_nulls(df):

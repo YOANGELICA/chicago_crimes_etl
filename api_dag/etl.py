@@ -7,8 +7,9 @@ import transform
 import db_queries
 
 def read_csv():
-    df = pd.read_csv("./data/Crimes_2001_to_Present.csv")
+    df = pd.read_csv("./data/filtered_data.csv")
     logging.info("MY DF: ", df)
+    logging.info("df shape: ",df)
     return df.to_json(orient='records')
 
 def read_api_iucr():
@@ -39,6 +40,11 @@ def read_api_iucr():
     return df.to_json(orient='records')
 
 def read_api_update():
+
+    df = pd.read_csv("./data/new_data.csv")
+    logging.info("MY DF: ", df)
+    logging.info("df shape: ",df)
+    """
     with open('./secrets/api_credentials.json') as config_json:
         config = json.load(config_json)
         socrata_domain = config["socrata_domain"]
@@ -64,6 +70,7 @@ def read_api_update():
 
     df = pd.DataFrame(all_records)
     df.to_csv("./data/new_data.csv", index=False)
+   """
     return df.to_json(orient='records')
 
 def transform_csv(**kwargs):
