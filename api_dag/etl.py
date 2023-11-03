@@ -214,21 +214,21 @@ def create_tables():
     db_queries.create_table_crimes()
 
     description_crimes= db_queries.describe_crimes()
-    desc_crimes=pd.DataFrame(description_crimes, columns=['Field', 'Type', 'Null', 'Key', 'Default', 'Extra'])
+    desc_crimes = pd.DataFrame(description_crimes, columns=['Field', 'Type'])
     logging.info(desc_crimes)
 
     ###
     db_queries.create_table_iucr()
 
     description_iucr= db_queries.describe_iucr()
-    desc_iucr=pd.DataFrame(description_iucr, columns=['Field', 'Type', 'Null', 'Key', 'Default', 'Extra'])
+    desc_iucr=pd.DataFrame(description_iucr, columns=['Field', 'Type'])
     logging.info(desc_iucr)
 
     ###
     db_queries.create_table_dates()
 
     description_dates= db_queries.describe_dates()
-    desc_dates=pd.DataFrame(description_dates, columns=['Field', 'Type', 'Null', 'Key', 'Default', 'Extra'])
+    desc_dates=pd.DataFrame(description_dates, columns=['Field', 'Type'])
     logging.info(desc_dates)
 
 def load_crimes(**kwargs):
@@ -264,7 +264,7 @@ def load_iucr(**kwargs):
     logging.info(f"data is: {df.head()}")
     logging.info(f"Dataframe intial shape: {df.shape[0]} Rows and {df.shape[1]} Columns")
 
-    db_queries.insert_info_iucr()
+    db_queries.insert_info_iucr(df)
 
 def load_date(**kwargs):
     logging.info("kwargs are: ", kwargs.keys())
@@ -281,7 +281,7 @@ def load_date(**kwargs):
     logging.info(f"data is: {df.head()}")
     logging.info(f"Dataframe intial shape: {df.shape[0]} Rows and {df.shape[1]} Columns")
 
-    db_queries.insert_info_dates()
+    db_queries.insert_info_dates(df)
 
 
 

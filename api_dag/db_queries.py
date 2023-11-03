@@ -13,14 +13,23 @@ def create_table_crimes():
     conx = create_db_connection()
     mycursor = conx.cursor()
 
-    mycursor.execute("""CREATE TABLE IF NOT EXISTS crimes(
-                     id int PRIMARY KEY,date date, 
-                     time time, block VARCHAR(150), iucr VARCHAR(10), 
-                     primary_type VARCHAR(150), description VARCHAR(150), 
-                     location_desc VARCHAR(150), arrest boolean, 
-                     district int, year int, updated_on datetime, location point
-        );
-        """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS crimes (
+        id SERIAL PRIMARY KEY,
+        date DATE,
+        time TIME,
+        block VARCHAR(150),
+        iucr VARCHAR(10),
+        primary_type VARCHAR(150),
+        description VARCHAR(150),
+        location_desc VARCHAR(150),
+        arrest BOOLEAN,
+        district INT,
+        year INT,
+        updated_on TIMESTAMP,
+        location POINT
+    );
+""")
 
     conx.commit()
     mycursor.close()
@@ -30,7 +39,7 @@ def create_table_crimes():
 def describe_crimes():
     conx = create_db_connection()
     mycursor = conx.cursor()
-    mycursor.execute("""DESCRIBE crimes;""")
+    mycursor.execute("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'crimes';")
 
     description_crimes = mycursor.fetchall()
 
@@ -79,12 +88,13 @@ def create_table_iucr():
     conx = create_db_connection()
     mycursor = conx.cursor()
 
-    mycursor.execute("""CREATE TABLE IF NOT EXISTS codes(
-                 iucr varchar(10) PRIMARY KEY,
-                 primary_description VARCHAR(50),
-                 secondary_description VARCHAR(70),
-                 index_code VARCHAR(5),
-                 active boolean)""")
+    mycursor.execute("""CREATE TABLE IF NOT EXISTS codes (
+                        iucr VARCHAR(10) PRIMARY KEY,
+                        primary_description VARCHAR(50),
+                        secondary_description VARCHAR(70),
+                        index_code VARCHAR(5),
+                        active BOOLEAN
+                        );""")
 
     conx.commit()
     mycursor.close()
@@ -95,8 +105,8 @@ def describe_iucr():
     conx = create_db_connection()
     mycursor = conx.cursor()
 
-    query = "DESCRIBE codes"
-    mycursor.execute(query)
+    mycursor.execute("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'codes';")
+
 
     description_iucr = mycursor.fetchall()
 
@@ -133,12 +143,13 @@ def create_table_dates():
     conx = create_db_connection()
     mycursor = conx.cursor()
 
-    mycursor.execute("""CREATE TABLE IF NOT EXISTS dates(
-                 date datetime,
-                 date_id varchar(10) PRIMARY KEY,
-                 year int,
-                 month varchar(10),
-                 day_week varchar(10))""")
+    mycursor.execute("""CREATE TABLE IF NOT EXISTS dates (
+                        date TIMESTAMP,
+                        date_id VARCHAR(10) PRIMARY KEY,
+                        year INT,
+                        month VARCHAR(10),
+                        day_week VARCHAR(10)
+                        );""")
 
     conx.commit()
     mycursor.close()
@@ -149,8 +160,8 @@ def describe_dates():
     conx = create_db_connection()
     mycursor = conx.cursor()
 
-    query = "DESCRIBE dates"
-    mycursor.execute(query)
+    mycursor.execute("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'dates';")
+
 
     description_iucr = mycursor.fetchall()
 

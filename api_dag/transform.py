@@ -5,6 +5,7 @@ def split_datetime(df):
     # turning date column into datetime to extract the time and create the time column
     df['date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y %I:%M:%S %p')
     df['time'] = df['date'].apply(lambda x: x.time())
+    df=df.drop('Date', axis=1) #Como cambiamos Date a date, creó una nueva columna, así que tocaba eliminarla para que no quedara extra
     return df
 
 def move_time(df):
@@ -17,9 +18,9 @@ def move_date(df):
     df.insert(2,'date', move_date)
     return df
 
-def drop_unnamed0(df):
-    df.drop('Unnamed: 0', inplace=True)
-    return df
+# def drop_unnamed0(df):
+#     df.drop('Unnamed: 0', inplace=True)
+#     return df
 
 def change_updated_on_format(df):
     # changing updated_on format
