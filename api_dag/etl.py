@@ -7,7 +7,7 @@ import transform
 import db_queries
 
 def read_csv():
-    df = pd.read_csv("/home/vagrant/airflow/dags/data/filtered_data.csv")
+    df = pd.read_csv("filtered_data.csv")
     logging.info("MY DF: ", df)
     logging.info("df shape: ",df)
     return df.to_json(orient='records')
@@ -24,7 +24,7 @@ def read_api_iucr():
         index_code = [x['index_code'] for x in data]
         active = [x['active'] for x in data]
     except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
+        logging.info(f"Error: {e}")
 
     data = {
                 'iucr': iucr,
@@ -41,7 +41,7 @@ def read_api_iucr():
 
 def read_api_update():
 
-    df = pd.read_csv("/home/vagrant/airflow/dags/data/new_data.csv")
+    df = pd.read_csv("new_data.csv")
     logging.info("MY DF: ", df)
     logging.info("df shape: ",df)
     """
@@ -91,12 +91,12 @@ def transform_csv(**kwargs):
     df=transform.split_datetime(df)
     df=transform.move_time(df)
     df=transform.move_date(df)
-    print(df.columns)
+    logging.info(df.columns)
     #df=transform.drop_unnamed0(df)
     df=transform.change_updated_on_format(df)
     df=transform.convert_dtype(df)
     df=transform.replace_nulls(df)
-    print(df.columns)
+    logging.info(df.columns)
     df=transform.change_dtype_columns(df)
     df=transform.change_columns_names(df)
     df=transform.create_point(df)
@@ -129,7 +129,7 @@ def transform_update_data(**kwargs):
     df=transform.change_columns_names(df)
     df=transform.drop_na_location(df)
     df=transform.drop_columns(df)
-    print(df.columns)
+    logging.info(df.columns)
 
     return df.to_json(orient='records')
 
@@ -177,6 +177,8 @@ def merge(**kwargs):
     logging.info(f"SECOND DF - CSV INFO: {csv_df.shape}")
 
     df = pd.concat([csv_df, update_df], ignore_index=True)
+
+    logging.info(f"DF COLUMNS: {df.columns}")
 
     return df.to_json(orient='records')
 

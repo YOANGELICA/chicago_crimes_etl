@@ -3,7 +3,7 @@ import json
 
 
 def create_db_connection():
-    with open('/home/vagrant/airflow/dags/secrets/config_db.json') as config_json:
+    with open('config_db.json') as config_json:
         config = json.load(config_json)
     conx = psy.connect(**config) 
     return conx
@@ -20,8 +20,6 @@ def create_table_crimes():
         time TIME,
         block VARCHAR(150),
         iucr VARCHAR(10),
-        primary_type VARCHAR(150),
-        description VARCHAR(150),
         location_desc VARCHAR(150),
         arrest BOOLEAN,
         district INT,
@@ -55,11 +53,9 @@ def insert_info_crimes(df):
     
     for _, i in df.iterrows():
         insert = """INSERT INTO crimes 
-        (id,date, time, block, iucr, 
-        primary_type, description, location_desc, arrest, 
+        (id,date, time, block, iucr, location_desc, arrest, 
         district, year, updated_on, location) 
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
-        %s,%s,%s,%s,%s,%s,%s,ST_GeomFromText(%s))"""
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromText(%s))"""
 
         datos = (
             i['id'],
@@ -67,8 +63,6 @@ def insert_info_crimes(df):
             i['time'],
             i['block'],
             i['iucr'],
-            i['primary_type'],
-            i['description'],
             i['location_desc'],
             i['arrest'],
             i['district'],
@@ -173,7 +167,7 @@ def insert_info_dates(df):
     mycursor = conx.cursor()
     
     for _, i in df.iterrows():
-        insert = """INSERT INTO codes 
+        insert = """INSERT INTO dates 
         (date, date_id, year, month, day_week) 
         VALUES (%s, %s, %s, %s, %s)"""
 
