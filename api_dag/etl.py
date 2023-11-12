@@ -7,7 +7,8 @@ import transform
 import db_queries
 
 def read_csv():
-    df = pd.read_csv("filtered_data.csv")
+    df = pd.read_csv("/home/vagrant/airflow/dags/data/filtered_data.csv")
+    df = transform.drop_rows_out_of_chicago(df)
     logging.info("MY DF: ", df)
     logging.info("df shape: ",df)
     return df.to_json(orient='records')
@@ -41,7 +42,7 @@ def read_api_iucr():
 
 def read_api_update():
 
-    df = pd.read_csv("new_data.csv")
+    df = pd.read_csv("/home/vagrant/airflow/dags/data/new_data.csv")
     logging.info("MY DF: ", df)
     logging.info("df shape: ",df)
     """
@@ -90,6 +91,7 @@ def transform_csv(**kwargs):
 
     df=transform.split_datetime(df)
     df=transform.move_time(df)
+    logging.info(df.columns)
     df=transform.move_date(df)
     logging.info(df.columns)
     #df=transform.drop_unnamed0(df)

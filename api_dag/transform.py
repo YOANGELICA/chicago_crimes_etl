@@ -1,6 +1,10 @@
 import pandas as pd
 
 
+def drop_rows_out_of_chicago(df):
+    df= df[~((df['Latitude'] == 36.619446395) & (df['Longitude'] == -91.686565684))]
+    return df
+
 def split_datetime(df):
     # turning date column into datetime to extract the time and create the time column
     df['date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y %I:%M:%S %p')
@@ -10,7 +14,7 @@ def split_datetime(df):
 
 def move_time(df):
     move_time = df.pop('time')
-    df.insert(3,'time', move_time)
+    df.insert(2,'time', move_time)
     return df
 
 def move_date(df):
@@ -42,6 +46,7 @@ def change_dtype_columns(df):
     cols = ['District', 'Ward', 'Community Area', 'Arrest', 'Domestic']
     df[cols] = df[cols].astype(int)
     return df
+
 def change_columns_names(df):
     df.columns = ["id","case_number","date", "time", "block","iucr","primary_type","description","location_desc","arrest","domestic","beat","district","ward","community_area","fbi_code", "x_coord","y_coord","year","updated_on","latitude","longitude", "location"]
     return df
@@ -57,7 +62,7 @@ def drop_na_location(df):
     return df
 
 def drop_columns(df):
-    columns_to_drop = ['case_number', 'domestic', 'beat', 'ward', 'community_area', 'fbi_code', 'x_coord', 'y_coord', 'latitude', 'longitude', 'primary_type', 'description']
+    columns_to_drop = ['case_number', 'domestic', 'beat', 'ward', 'community_area', 'fbi_code', 'x_coord', 'y_coord', 'primary_type', 'description']
     df.drop(columns=columns_to_drop, inplace=True)
     return df
 

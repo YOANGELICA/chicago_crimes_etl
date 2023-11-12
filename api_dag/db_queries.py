@@ -1,9 +1,10 @@
 import psycopg2 as psy
 import json
+from datetime import datetime
 
 
 def create_db_connection():
-    with open('config_db.json') as config_json:
+    with open('/home/vagrant/airflow/dags/secrets/config_db.json') as config_json:
         config = json.load(config_json)
     conx = psy.connect(**config) 
     return conx
@@ -25,6 +26,8 @@ def create_table_crimes():
         district INT,
         year INT,
         updated_on TIMESTAMP,
+        latitude float,
+        longitude float,
         location POINT
     );
 """)
@@ -52,22 +55,27 @@ def insert_info_crimes(df):
     mycursor = conx.cursor()
     
     for _, i in df.iterrows():
+        date_value = datetime.fromtimestamp(i['date'] / 1000).date()
+        arrest_value = bool(i['arrest'])
+
         insert = """INSERT INTO crimes 
         (id,date, time, block, iucr, location_desc, arrest, 
-        district, year, updated_on, location) 
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromText(%s))"""
+        district, year, updated_on, latitude, longitude, location) 
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,ST_GeomFromText(%s))"""
 
         datos = (
             i['id'],
-            i['date'],
+            date_value,
             i['time'],
             i['block'],
             i['iucr'],
             i['location_desc'],
-            i['arrest'],
+            arrest_value,
             i['district'],
             i['year'],
             i['updated_on'],
+            i['latitude'],
+            i['longitude'],
             i['location']
         )
 
@@ -167,12 +175,14 @@ def insert_info_dates(df):
     mycursor = conx.cursor()
     
     for _, i in df.iterrows():
+        date_value = datetime.utcfromtimestamp(i['date']).strftime('%Y-%m-%d %H:%M:%S')
+
         insert = """INSERT INTO dates 
         (date, date_id, year, month, day_week) 
         VALUES (%s, %s, %s, %s, %s)"""
 
         datos = (
-            i['date'],
+            date_value,
             i['date_id'], 
             i['year'], 
             i['month'], 
