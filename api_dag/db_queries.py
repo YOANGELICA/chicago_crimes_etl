@@ -5,6 +5,7 @@ import os
 import pandas as pd
 import psycopg2 as psy
 
+
 def create_db_connection():
 
     script_dir = os.path.dirname(__file__)
