@@ -1,10 +1,9 @@
 .ipynb_checkpoints/
-data/Crimes_2001_to_Present.csv
-data/data.csv
+
 etl_env/
 
 config_db.json
-transformations/config_db.json
-data/new_data.csv
-api_dag/secrets/
-api_dag/data/
+
+/data
+
+#api_dag/api_endpoint

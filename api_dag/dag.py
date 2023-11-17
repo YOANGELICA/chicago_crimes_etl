@@ -5,7 +5,6 @@ from airflow.models.baseoperator import chain
 from datetime import datetime
 from etl import read_csv, read_api_iucr, read_api_update, transform_csv, transform_update_data, transform_iucr, merge, create_date, create_tables, load_crimes, load_iucr, load_date, kafka_producer
 
-
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,

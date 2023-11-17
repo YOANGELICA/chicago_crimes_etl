@@ -3,6 +3,7 @@ import datetime as dt
 import json
 from kafka import KafkaProducer
 import logging
+import os
 import pandas as pd
 import requests
 from sodapy import Socrata
@@ -13,7 +14,11 @@ import db_queries
 
 
 def read_csv():
-    df = pd.read_csv("/home/vagrant/chicago_crimes_etl/data/filtered_data.csv")
+
+    script_dir = os.path.dirname(__file__)
+    csv_file = os.path.join(script_dir, '../data/filtered_data.csv')
+
+    df = pd.read_csv(csv_file)
     df = df.sample(frac=0.5, random_state=42)
     df = transform.drop_rows_out_of_chicago(df)
     logging.info("MY DF: ", df)
@@ -21,7 +26,9 @@ def read_csv():
     return df.to_json(orient='records')
 
 def read_api_iucr():
+
     url = "https://data.cityofchicago.org/resource/c7ck-438e.json"
+
     try:
         response = requests.get(url)
         data = response.json()
@@ -31,6 +38,7 @@ def read_api_iucr():
         secondary_description = [x['secondary_description'] for x in data]
         index_code = [x['index_code'] for x in data]
         active = [x['active'] for x in data]
+
     except requests.exceptions.RequestException as e:
         logging.info(f"Error: {e}")
 
@@ -49,7 +57,11 @@ def read_api_iucr():
 
 def read_api_update():
 
-    df = pd.read_csv("/home/vagrant/chicago_crimes_etl/data/new_data.csv")
+    script_dir = os.path.dirname(__file__)
+    csv_file = os.path.join(script_dir, '../data/new_data.csv')
+
+    df = pd.read_csv(csv_file)
+
     logging.info("MY DF: ", df)
     logging.info("df shape: ",df)
     """
@@ -157,6 +169,7 @@ def transform_update_data(**kwargs):
     return df.to_json(orient='records')
 
 def transform_iucr(**kwargs):
+
     logging.info("kwargs are: ", kwargs.keys())
 
     ti = kwargs['ti']
@@ -177,6 +190,7 @@ def transform_iucr(**kwargs):
 
 
 def merge(**kwargs):
+
     logging.info("kwargs are: ", kwargs.keys())
 
     ti = kwargs['ti']
@@ -199,9 +213,12 @@ def merge(**kwargs):
     logging.info(f"SECOND DF - CSV INFO: {csv_df.shape}")
 
     df = pd.concat([csv_df, update_df], ignore_index=True)
-
-    df['date'] = df['date'].apply(lambda x: datetime.fromtimestamp(x / 1000).strftime('%Y-%m-%d'))
-
+    
+    #df['date'] = df['date'].apply(lambda x: datetime.fromtimestamp(x / 1000).strftime('%Y-%m-%d'))    
+    df['date'] = df['date'].apply(lambda x: datetime.fromtimestamp(x / 1000))
+    df.insert(1, 'date_id', df['date'].dt.strftime('%Y%m%d'))
+    df = df.drop('date', axis =1) # drop og date column
+	
     logging.info(f"df shape: {df.shape}")
     df = df.drop_duplicates()
     logging.info(f"df shape: {df.shape}")
@@ -223,19 +240,18 @@ def create_date(**kwargs):
     json_data = json.loads(str_data)
     df = pd.json_normalize(data=json_data)
 
-    date_df = df[['date']]
+    date_df = df[['date_id']]
     date_df = date_df.drop_duplicates().reset_index(drop=True)
 
     logging.info(f"date df shape: {date_df.shape}") # should be (8299, 1)
     
-    date_df['date'] = pd.to_datetime(date_df['date']) # in case date column is not received as datetime
-    date_df['date_id'] = date_df['date'].dt.strftime('%Y%m%d')
+    date_df['date'] = pd.to_datetime(date_df['date_id'], format='%Y%m%d') # in case date column is not received as datetime
     date_df['year'] = date_df['date'].dt.year
     date_df['month'] = date_df['date'].dt.strftime('%B')
-    date_df['day_week'] = date_df['date'].dt.strftime('%A')
+    date_df['day_week'] = date_df['date'].dt.day_name()
     
-    reorder = ['date_id', 'date', 'year', 'month', 'day_week']
-    date_df = date_df[reorder]
+#    reorder = ['date_id', 'date', 'year', 'month', 'day_week']
+ #   date_df = date_df[reorder]
 
     logging.info(f'first row: {date_df.iloc[0].values}')
 
@@ -277,6 +293,7 @@ def load_crimes(**kwargs):
     json_data = json.loads(str_data)
     df = pd.json_normalize(data=json_data)
 
+    #df = df.drop('date', axis =1)
     logging.info(f"data is: {df.head()}")
     logging.info(f"Dataframe intial shape: {df.shape[0]} Rows and {df.shape[1]} Columns")
 
@@ -284,6 +301,7 @@ def load_crimes(**kwargs):
     db_queries.insert_info_crimes(df)
 
 def load_iucr(**kwargs):
+
     logging.info("kwargs are: ", kwargs.keys())
 
     ti = kwargs['ti']
@@ -312,7 +330,7 @@ def load_date(**kwargs):
 
     json_data = json.loads(str_data)
     df = pd.json_normalize(data=json_data)
-
+	
     logging.info(f"data is: {df.head()}")
     logging.info(f"row : {df.iloc[0].values}")
     
@@ -322,15 +340,14 @@ def load_date(**kwargs):
 
     db_queries.insert_info_dates(df)
 
-
 def kafka_producer(batch_size=100):
-
+    
     # retieve crime data
     df = db_queries.get_crimes_data()
 
     # log first few rows of the df
     logging.info(f"data is: {df.head()}")
-    logging.info(f"row : {df.iloc[0].values}")
+    print(f"row : {df.iloc[0].values}")
 
     # set up KafkaProducer object
     producer = KafkaProducer(
@@ -339,25 +356,28 @@ def kafka_producer(batch_size=100):
     )
  
     batch = []
+    
     for _, row in df.iterrows():
         # Convert row to json string
         row_json = row.to_json()
         batch.append(row_json)
-        
+                
         if len(batch) == batch_size:
             # send the batch of rows as a single message to th3 topic
             message = '\n'.join(batch) # batch is a list of josn strings with line breaks(\n)
             producer.send("crimes-data", value=message)
             # log message sent
-            logging.info(f"new batch sent at {dt.datetime.utcnow()}")
+            print(f"new batch sent at {dt.datetime.utcnow()}")
             # clear batch
             batch = []
+#            sleep(10)
 
     # if there are remaining rows that werent sent in a full batch:
     if batch:
         message = '\n'.join(batch)
         producer.send("crimes-data", value=message)
-        logging.info(f"last batch sent at {dt.datetime.utcnow()}")
+        print(f"last batch sent at {dt.datetime.utcnow()}")
 
     # log completion message
-    logging.info("All rows sent")
+    print("All rows sent")
+

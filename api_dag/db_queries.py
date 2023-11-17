@@ -5,7 +5,6 @@ import os
 import pandas as pd
 import psycopg2 as psy
 
-
 def create_db_connection():
 
     script_dir = os.path.dirname(__file__)
@@ -33,7 +32,7 @@ def create_table_crimes():
         mycursor.execute("""
             CREATE TABLE IF NOT EXISTS crimes (
             id SERIAL PRIMARY KEY,
-            date DATE,
+            date_id INT,
             time TIME,
             block VARCHAR(150),
             iucr VARCHAR(10),
@@ -78,11 +77,11 @@ def insert_info_crimes(df):
             arrest_value = bool(i['arrest'])
 
             insert = """INSERT INTO crimes 
-                        (id, date, time, block, iucr, location_desc, arrest, district, year, latitude, longitude) 
+                        (id, date_id, time, block, iucr, location_desc, arrest, district, year, latitude, longitude) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (id) 
                         DO UPDATE SET 
-                            date = EXCLUDED.date, 
+                            date_id = EXCLUDED.date_id, 
                             time = EXCLUDED.time, 
                             block = EXCLUDED.block,
                             iucr = EXCLUDED.iucr,
@@ -95,7 +94,7 @@ def insert_info_crimes(df):
 
             datos = (
                 i['id'],
-                i['date'],
+                i['date_id'],
                 i['time'],
                 i['block'],
                 i['iucr'],
@@ -204,7 +203,7 @@ def create_table_dates():
         mycursor = conx.cursor()
 
         mycursor.execute("""CREATE TABLE IF NOT EXISTS dates (
-                            date_id VARCHAR(10) PRIMARY KEY,
+                            date_id INT PRIMARY KEY,
                             date DATE,
                             year INT,
                             month VARCHAR(10),
