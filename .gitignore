@@ -6,4 +6,4 @@ config_db.json
 
 /data
 
-/api_dag/api_endpoint
+api_dag/api_endpoint
