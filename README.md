@@ -79,5 +79,5 @@ It contains 22 columns and over 7 million rows that correspond to crimes committ
     airflow standalone
     ```
 13. Change the file airflow.cfg and add the path to the api_dag folder so it can be added the etl_project dag.
-14. After the dag end, run in another console the consumer.py that is in the folder api_dag.py to send the streamed data to PowerBI.
-15. To connect the streaming data to PowerBI add an API endpoint, follow this [link](https://desarrollopowerbi.com/dashboard-en-tiempo-real-con-apacha-kafka-python-y-power-bi/) for more information.
+14. After the dag ends, run in another console the consumer.py that is in the folder api_dag to send the streamed data to PowerBI.
+15. To connect the streaming data to PowerBI add an API endpoint from this visualization tool, follow this [link](https://desarrollopowerbi.com/dashboard-en-tiempo-real-con-apacha-kafka-python-y-power-bi/) for more information.
